@@ -242,7 +242,19 @@ For issues or questions:
 
 ## License
 
-MIT License - Free to use, modify, and distribute
+GNU General Public License v3.0 (GPL-3.0)
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+**What this means:**
+- ✅ Free to use, modify, and distribute
+- ✅ Any modifications must also be open source under GPL
+- ✅ Improvements benefit the entire community
+- ✅ Source code must be made available to users
 
 ## Credits
 
