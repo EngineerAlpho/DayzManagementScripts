@@ -168,6 +168,9 @@ if [[ ! "$MOD_NAME" =~ ^@ ]]; then
     MOD_NAME="@$MOD_NAME"
 fi
 
+# Remove spaces from mod name
+MOD_NAME=$(echo "$MOD_NAME" | tr -d ' ')
+
 echo ""
 echo -e "${GREEN}Downloading Workshop ID: $WORKSHOP_ID${NC}"
 echo -e "${YELLOW}This may take a while depending on the mod size...${NC}"
@@ -265,8 +268,11 @@ if [ $? -eq 0 ]; then
     if [ -f "$LGSM_CONFIG" ]; then
         # Check if mods parameter exists
         if grep -q "^mods=" "$LGSM_CONFIG"; then
-            # Get current mods and convert from LinuxGSM format to simple format for comparison
-            CURRENT_MODS=$(grep "^mods=" "$LGSM_CONFIG" | sed 's/^mods=//' | sed 's/mods\///g' | sed 's/\\;//g' | tr -d '"')
+            # Get current mods - convert escaped semicolons to regular semicolons for splitting
+            CURRENT_MODS_RAW=$(grep "^mods=" "$LGSM_CONFIG" | sed 's/^mods=//')
+            
+            # Replace \; with regular ; for IFS splitting, and remove mods/ prefix
+            CURRENT_MODS=$(echo "$CURRENT_MODS_RAW" | sed 's/\\;/;/g' | sed 's/mods\/@/@/g')
             
             # Convert to array and check for exact match
             IFS=';' read -ra MOD_ARRAY <<< "$CURRENT_MODS"

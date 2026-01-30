@@ -104,6 +104,9 @@ while IFS= read -r line; do
             MOD_NAME="@$MOD_NAME"
         fi
         
+        # Remove spaces from mod name
+        MOD_NAME=$(echo "$MOD_NAME" | tr -d ' ')
+        
         current=$((current + 1))
         
         echo -e "${GREEN}========================================${NC}"
@@ -197,7 +200,11 @@ while IFS= read -r line; do
         
         if [ -f "$LGSM_CONFIG" ]; then
             if grep -q "^mods=" "$LGSM_CONFIG"; then
-                CURRENT_MODS=$(grep "^mods=" "$LGSM_CONFIG" | sed 's/^mods=//' | sed 's/mods\///g' | sed 's/\\;//g')
+                # Get current mods - convert escaped semicolons to regular semicolons for splitting
+                CURRENT_MODS_RAW=$(grep "^mods=" "$LGSM_CONFIG" | sed 's/^mods=//')
+                
+                # Replace \; with regular ; for IFS splitting, and remove mods/ prefix
+                CURRENT_MODS=$(echo "$CURRENT_MODS_RAW" | sed 's/\\;/;/g' | sed 's/mods\/@/@/g')
                 
                 IFS=';' read -ra MOD_ARRAY <<< "$CURRENT_MODS"
                 MOD_EXISTS=false

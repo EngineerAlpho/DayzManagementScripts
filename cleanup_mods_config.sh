@@ -28,7 +28,11 @@ if ! grep -q "^mods=" "$LGSM_CONFIG"; then
     exit 0
 fi
 
-CURRENT_MODS=$(grep "^mods=" "$LGSM_CONFIG" | sed 's/^mods=//' | sed 's/mods\///g' | sed 's/\\;//g')
+# Get current mods - convert escaped semicolons to regular semicolons for splitting
+CURRENT_MODS_RAW=$(grep "^mods=" "$LGSM_CONFIG" | sed 's/^mods=//')
+
+# Replace \; with regular ; for IFS splitting, and remove mods/ prefix  
+CURRENT_MODS=$(echo "$CURRENT_MODS_RAW" | sed 's/\\;/;/g' | sed 's/mods\/@/@/g')
 
 echo -e "${BLUE}Current mods in config:${NC}"
 echo ""
