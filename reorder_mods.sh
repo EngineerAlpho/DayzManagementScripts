@@ -29,7 +29,7 @@ if ! grep -q "^mods=" "$LGSM_CONFIG"; then
     exit 0
 fi
 
-CURRENT_MODS=$(grep "^mods=" "$LGSM_CONFIG" | cut -d'"' -f2)
+CURRENT_MODS=$(grep "^mods=" "$LGSM_CONFIG" | sed 's/^mods=//' | sed 's/mods\///g' | sed 's/\\;//g')
 
 if [ -z "$CURRENT_MODS" ]; then
     echo -e "${YELLOW}No mods configured yet${NC}"
@@ -49,7 +49,9 @@ echo ""
 display_mods() {
     echo -e "${BLUE}Current Load Order:${NC}"
     for i in "${!MOD_ARRAY[@]}"; do
-        echo -e "  $((i+1)). ${YELLOW}${MOD_ARRAY[$i]}${NC}"
+        if [ -n "${MOD_ARRAY[$i]}" ]; then
+            echo -e "  $((i+1)). ${YELLOW}${MOD_ARRAY[$i]}${NC}"
+        fi
     done
     echo ""
 }
@@ -167,8 +169,18 @@ while true; do
             ;;
         4)
             # Save
-            NEW_MODS=$(IFS=';'; echo "${MOD_ARRAY[*]}")
-            sed -i "s|^mods=.*|mods=\"$NEW_MODS\"|" "$LGSM_CONFIG"
+            NEW_MODS=""
+            for mod in "${MOD_ARRAY[@]}"; do
+                if [ -n "$mod" ]; then
+                    if [ -z "$NEW_MODS" ]; then
+                        NEW_MODS="mods/$mod"
+                    else
+                        NEW_MODS="$NEW_MODS\\\\;mods/$mod"
+                    fi
+                fi
+            done
+            
+            sed -i "s|^mods=.*|mods=$NEW_MODS|" "$LGSM_CONFIG"
             
             echo ""
             echo -e "${GREEN}========================================${NC}"
@@ -177,7 +189,9 @@ while true; do
             echo ""
             echo -e "${BLUE}Final Load Order:${NC}"
             for i in "${!MOD_ARRAY[@]}"; do
-                echo -e "  $((i+1)). ${YELLOW}${MOD_ARRAY[$i]}${NC}"
+                if [ -n "${MOD_ARRAY[$i]}" ]; then
+                    echo -e "  $((i+1)). ${YELLOW}${MOD_ARRAY[$i]}${NC}"
+                fi
             done
             echo ""
             echo -e "${CYAN}Remember to restart your server for changes to take effect!${NC}"

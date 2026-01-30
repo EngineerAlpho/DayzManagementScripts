@@ -265,8 +265,8 @@ if [ $? -eq 0 ]; then
     if [ -f "$LGSM_CONFIG" ]; then
         # Check if mods parameter exists
         if grep -q "^mods=" "$LGSM_CONFIG"; then
-            # Get current mods
-            CURRENT_MODS=$(grep "^mods=" "$LGSM_CONFIG" | cut -d'"' -f2)
+            # Get current mods and convert from LinuxGSM format to simple format for comparison
+            CURRENT_MODS=$(grep "^mods=" "$LGSM_CONFIG" | sed 's/^mods=//' | sed 's/mods\///g' | sed 's/\\;//g' | tr -d '"')
             
             # Convert to array and check for exact match
             IFS=';' read -ra MOD_ARRAY <<< "$CURRENT_MODS"
@@ -282,19 +282,30 @@ if [ $? -eq 0 ]; then
             if [ "$MOD_EXISTS" = true ]; then
                 echo -e "${YELLOW}$MOD_NAME already in configuration${NC}"
             else
-                # Add mod to list
+                # Add mod to list in LinuxGSM format
                 if [ -z "$CURRENT_MODS" ]; then
-                    NEW_MODS="$MOD_NAME"
+                    NEW_MODS="mods/$MOD_NAME"
                 else
-                    NEW_MODS="$CURRENT_MODS;$MOD_NAME"
+                    # Reconstruct with proper format
+                    NEW_MODS=""
+                    for mod in "${MOD_ARRAY[@]}"; do
+                        if [ -n "$mod" ]; then
+                            if [ -z "$NEW_MODS" ]; then
+                                NEW_MODS="mods/$mod"
+                            else
+                                NEW_MODS="$NEW_MODS\\\\;mods/$mod"
+                            fi
+                        fi
+                    done
+                    NEW_MODS="$NEW_MODS\\\\;mods/$MOD_NAME"
                 fi
                 
-                sed -i "s|^mods=.*|mods=\"$NEW_MODS\"|" "$LGSM_CONFIG"
+                sed -i "s|^mods=.*|mods=$NEW_MODS|" "$LGSM_CONFIG"
                 echo -e "${GREEN}✓ Added $MOD_NAME to server mods${NC}"
             fi
         else
-            # Add mods parameter
-            echo "mods=\"$MOD_NAME\"" >> "$LGSM_CONFIG"
+            # Add mods parameter in LinuxGSM format
+            echo "mods=mods/$MOD_NAME" >> "$LGSM_CONFIG"
             echo -e "${GREEN}✓ Added mods parameter with $MOD_NAME${NC}"
         fi
     else
@@ -314,7 +325,7 @@ if [ $? -eq 0 ]; then
     echo ""
     echo -e "${YELLOW}Current mods in config:${NC}"
     if [ -f "$LGSM_CONFIG" ]; then
-        grep "^mods=" "$LGSM_CONFIG" | cut -d'"' -f2 | tr ';' '\n' | sed 's/^/  /'
+        grep "^mods=" "$LGSM_CONFIG" | sed 's/^mods=//' | sed 's/\\;/\n/g' | sed 's/mods\//  @/g'
     fi
     echo ""
     
