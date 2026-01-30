@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DayZ Server Management Flow</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Source+Code+Pro:wght@400;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Source Code Pro', monospace;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: #e0e0e0;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, transparent 1px, transparent 2px, rgba(255,255,255,0.03) 3px),
+                repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, transparent 1px, transparent 2px, rgba(255,255,255,0.03) 3px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #00ff88, #00ccff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 0 0 40px rgba(0, 255, 136, 0.3);
+            animation: titleGlow 3s ease-in-out infinite;
+        }
+        
+        @keyframes titleGlow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.3); }
+        }
+        
+        .subtitle {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #00ccff;
+            margin-bottom: 60px;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+        
+        .flow-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            position: relative;
+        }
+        
+        .flow-section {
+            position: relative;
+        }
+        
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #00ff88;
+            margin-bottom: 20px;
+            padding-left: 20px;
+            border-left: 4px solid #00ff88;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .script-card {
+            background: rgba(26, 26, 46, 0.8);
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+        
+        .script-card:hover {
+            border-color: #00ff88;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0, 255, 136, 0.3);
+        }
+        
+        .script-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(135deg, #00ff88, #00ccff, #ff00ff);
+            border-radius: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+        
+        .script-card:hover::before {
+            opacity: 0.2;
+        }
+        
+        .script-number {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #00ff88, #00ccff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 1.5rem;
+            color: #0f0f1e;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+        
+        .script-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00ccff;
+            margin-bottom: 15px;
+            padding-right: 60px;
+        }
+        
+        .script-purpose {
+            font-size: 1.1rem;
+            color: #b0b0b0;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .script-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .detail-item {
+            background: rgba(0, 204, 255, 0.1);
+            border-left: 3px solid #00ccff;
+            padding: 10px 15px;
+            border-radius: 4px;
+        }
+        
+        .detail-label {
+            font-size: 0.85rem;
+            color: #00ff88;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            font-size: 1rem;
+            color: #e0e0e0;
+        }
+        
+        .arrow {
+            text-align: center;
+            font-size: 3rem;
+            color: #00ff88;
+            margin: 10px 0;
+            animation: arrowPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes arrowPulse {
+            0%, 100% { opacity: 0.4; transform: translateY(0); }
+            50% { opacity: 1; transform: translateY(10px); }
+        }
+        
+        .workflow-connections {
+            margin-top: 40px;
+            padding: 30px;
+            background: rgba(255, 0, 255, 0.05);
+            border: 2px solid rgba(255, 0, 255, 0.3);
+            border-radius: 12px;
+        }
+        
+        .connection-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            color: #ff00ff;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .connection-item {
+            background: rgba(255, 0, 255, 0.1);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #ff00ff;
+            border-radius: 4px;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        
+        .tag {
+            display: inline-block;
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-right: 8px;
+            margin-top: 10px;
+            font-weight: 600;
+            border: 1px solid rgba(0, 255, 136, 0.4);
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .script-name {
+                font-size: 1.3rem;
+            }
+            
+            .script-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Engineer Alpho</h1>
+        <div class="subtitle">DayZ Server Management • 7 Scripts • Complete Automation</div>
+        
+        <div class="flow-container">
+            <!-- PHASE 1: MOD INSTALLATION -->
+            <div class="flow-section">
+                <div class="section-title">Phase 1: Mod Installation</div>
+                
+                <div class="script-card">
+                    <div class="script-number">1</div>
+                    <div class="script-name">download_workshop_mod.sh</div>
+                    <div class="script-purpose">
+                        Downloads mods from Steam Workshop and installs them to your server. 
+                        This is your starting point for adding any new mod to the server.
+                    </div>
+                    <div class="script-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Input</div>
+                            <div class="detail-value">Workshop ID</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Downloads From</div>
+                            <div class="detail-value">Steam Workshop</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Installs To</div>
+                            <div class="detail-value">~/serverfiles/mods/</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Auto-Updates</div>
+                            <div class="detail-value">LinuxGSM Config</div>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="tag">SteamCMD</span>
+                        <span class="tag">Auto-Convert Lowercase</span>
+                        <span class="tag">Key Management</span>
+                        <span class="tag">Config Update</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <!-- BATCH INSTALLATION -->
+            <div class="flow-section">
+                <div class="section-title">Phase 1B: Batch Installation (Alternative)</div>
+                
+                <div class="script-card">
+                    <div class="script-number">2</div>
+                    <div class="script-name">batch_install_mods.sh</div>
+                    <div class="script-purpose">
+                        Install multiple mods at once from a text file. Perfect for setting up a new server 
+                        or deploying a standardized mod pack. Uses the same format as workshop URLs.
+                    </div>
+                    <div class="script-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Input</div>
+                            <div class="detail-value">Text file with mod list</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Format</div>
+                            <div class="detail-value">ModName - Workshop URL</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Downloads</div>
+                            <div class="detail-value">All mods in sequence</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Auto-Updates</div>
+                            <div class="detail-value">LinuxGSM Config + Mapping</div>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="tag">Bulk Installation</span>
+                        <span class="tag">Example File Included</span>
+                        <span class="tag">Progress Tracking</span>
+                        <span class="tag">Error Handling</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <!-- CLEANUP TOOL -->
+            <div class="flow-section">
+                <div class="section-title">Phase 1C: Configuration Cleanup</div>
+                
+                <div class="script-card">
+                    <div class="script-number">3</div>
+                    <div class="script-name">cleanup_mods_config.sh</div>
+                    <div class="script-purpose">
+                        Quickly manage and clean up your mod configuration. Remove specific mods from the 
+                        config or clear everything to start fresh without touching the actual mod files.
+                    </div>
+                    <div class="script-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Function</div>
+                            <div class="detail-value">Config Management</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Can Remove</div>
+                            <div class="detail-value">Single or All Mods</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Safety</div>
+                            <div class="detail-value">Keeps Mod Files Intact</div>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="tag">Quick Cleanup</span>
+                        <span class="tag">Interactive Menu</span>
+                        <span class="tag">Non-Destructive</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <!-- PHASE 2: MOD ORGANIZATION -->
+            <div class="flow-section">
+                <div class="section-title">Phase 2: Mod Organization</div>
+                
+                <div class="script-card">
+                    <div class="script-number">4</div>
+                    <div class="script-name">reorder_mods.sh</div>
+                    <div class="script-purpose">
+                        Manages the load order of your mods. Critical for ensuring dependencies load before 
+                        mods that require them (e.g., framework mods before content mods).
+                    </div>
+                    <div class="script-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Function</div>
+                            <div class="detail-value">Interactive Reordering</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Modifies</div>
+                            <div class="detail-value">dayzserver.cfg</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Use Case</div>
+                            <div class="detail-value">Fix Load Order Issues</div>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="tag">Load Order</span>
+                        <span class="tag">Dependencies</span>
+                        <span class="tag">Interactive Menu</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <!-- PHASE 3: XML CONFIGURATION -->
+            <div class="flow-section">
+                <div class="section-title">Phase 3: XML Integration</div>
+                
+                <div class="script-card">
+                    <div class="script-number">5</div>
+                    <div class="script-name">dayz_mod_xml_merger.py</div>
+                    <div class="script-purpose">
+                        Automatically scans mod folders for XML files (types.xml, events.xml, spawnabletypes.xml) 
+                        and merges them into your mission folder XMLs. Eliminates manual XML editing.
+                    </div>
+                    <div class="script-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Scans</div>
+                            <div class="detail-value">All Mod Folders</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Finds</div>
+                            <div class="detail-value">types/events/spawnable XMLs</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Merges To</div>
+                            <div class="detail-value">mpmissions/*/db/*.xml</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Protection</div>
+                            <div class="detail-value">Auto-Backup Before Merge</div>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="tag">Auto-Scan</span>
+                        <span class="tag">Duplicate Detection</span>
+                        <span class="tag">Backup System</span>
+                        <span class="tag">Multi-Mission</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <!-- PHASE 4: MAINTENANCE -->
+            <div class="flow-section">
+                <div class="section-title">Phase 4: Ongoing Maintenance</div>
+                
+                <div class="script-card">
+                    <div class="script-number">6</div>
+                    <div class="script-name">update_all_mods.sh</div>
+                    <div class="script-purpose">
+                        Keeps all your mods up-to-date by re-downloading them from Steam Workshop. 
+                        Uses the mod mapping file to know which mods you have installed.
+                    </div>
+                    <div class="script-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Updates</div>
+                            <div class="detail-value">All Installed Mods</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Uses</div>
+                            <div class="detail-value">~/.dayz_mod_mapping</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Frequency</div>
+                            <div class="detail-value">Run Manually or Cron</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Safety</div>
+                            <div class="detail-value">Validates Downloads</div>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="tag">Batch Updates</span>
+                        <span class="tag">Preserves Names</span>
+                        <span class="tag">Key Updates</span>
+                        <span class="tag">Automation Ready</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- WORKFLOW CONNECTIONS -->
+            <div class="workflow-connections">
+                <div class="connection-title">How Everything Connects</div>
+                
+                <div class="connection-item">
+                    <strong>Script 1 vs Script 2:</strong> Use download_workshop_mod.sh for installing mods one-by-one 
+                    interactively. Use batch_install_mods.sh when you have a pre-made list of mods to install in bulk.
+                </div>
+                
+                <div class="connection-item">
+                    <strong>Script 3:</strong> Use cleanup_mods_config.sh anytime you need to remove mods from your 
+                    configuration without deleting the actual mod files - great for testing different mod combinations.
+                </div>
+                
+                <div class="connection-item">
+                    <strong>1/2 → 4:</strong> After downloading mods (individually or in batch), use reorder_mods.sh 
+                    to set proper load order (frameworks first, then content mods).
+                </div>
+                
+                <div class="connection-item">
+                    <strong>4 → 5:</strong> Once load order is correct, use dayz_mod_xml_merger.py to merge 
+                    mod XMLs into server XMLs so items spawn in-game.
+                </div>
+                
+                <div class="connection-item">
+                    <strong>5 → 6:</strong> When mods update on Workshop, run update_all_mods.sh to download 
+                    new versions, then re-run the merger if XMLs changed.
+                </div>
+                
+                <div class="connection-item">
+                    <strong>Typical Flow (New Server):</strong> Create mod list → Batch install → Check load order → 
+                    Merge XMLs → Test server → Update mods periodically
+                </div>
+                
+                <div class="connection-item">
+                    <strong>Typical Flow (Single Mod):</strong> Download single mod → Check load order → Merge XMLs → 
+                    Test server
+                </div>
+                
+                <div class="connection-item">
+                    <strong>Key Files:</strong>
+                    <ul style="margin-top: 10px; margin-left: 20px; line-height: 1.8;">
+                        <li>~/.dayz_mod_mapping - Tracks Workshop ID to mod name (used by updater)</li>
+                        <li>~/lgsm/config-lgsm/dayzserver/dayzserver.cfg - Mod load order configuration</li>
+                        <li>~/mpmissions/*/db/*.xml - Server spawn configuration (merge target)</li>
+                        <li>~/serverfiles/mods/@ModName/ - Installed mod files</li>
+                        <li>example_mod_list.txt - Template for batch installations</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
