@@ -235,11 +235,11 @@ while IFS= read -r line; do
                         NEW_MODS="$NEW_MODS\\\\;mods/$MOD_NAME"
                     fi
                     
-                    sed -i "s|^mods=.*|mods=$NEW_MODS|" "$LGSM_CONFIG"
+                    sed -i "s|^mods=.*|mods=\"$NEW_MODS\"|" "$LGSM_CONFIG"
                     echo -e "${GREEN}✓ Added to server config${NC}"
                 fi
             else
-                echo "mods=mods/$MOD_NAME" >> "$LGSM_CONFIG"
+                echo "mods=\"mods/$MOD_NAME\"" >> "$LGSM_CONFIG"
                 echo -e "${GREEN}✓ Added to server config${NC}"
             fi
         fi

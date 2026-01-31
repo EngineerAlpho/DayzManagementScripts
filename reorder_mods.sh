@@ -184,7 +184,7 @@ while true; do
                 fi
             done
             
-            sed -i "s|^mods=.*|mods=$NEW_MODS|" "$LGSM_CONFIG"
+            sed -i "s|^mods=.*|mods=\"$NEW_MODS\"|" "$LGSM_CONFIG"
             
             echo ""
             echo -e "${GREEN}========================================${NC}"

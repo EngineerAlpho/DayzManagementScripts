@@ -306,12 +306,12 @@ if [ $? -eq 0 ]; then
                     NEW_MODS="$NEW_MODS\\\\;mods/$MOD_NAME"
                 fi
                 
-                sed -i "s|^mods=.*|mods=$NEW_MODS|" "$LGSM_CONFIG"
+                sed -i "s|^mods=.*|mods=\"$NEW_MODS\"|" "$LGSM_CONFIG"
                 echo -e "${GREEN}✓ Added $MOD_NAME to server mods${NC}"
             fi
         else
             # Add mods parameter in LinuxGSM format
-            echo "mods=mods/$MOD_NAME" >> "$LGSM_CONFIG"
+            echo "mods=\"mods/$MOD_NAME\"" >> "$LGSM_CONFIG"
             echo -e "${GREEN}✓ Added mods parameter with $MOD_NAME${NC}"
         fi
     else

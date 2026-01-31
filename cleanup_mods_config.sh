@@ -77,7 +77,7 @@ case $choice in
             fi
         done
         
-        sed -i "s|^mods=.*|mods=$NEW_MODS|" "$LGSM_CONFIG"
+        sed -i "s|^mods=.*|mods=\"$NEW_MODS\"|" "$LGSM_CONFIG"
         echo ""
         echo -e "${GREEN}✓ Removed $MOD_TO_REMOVE${NC}"
         echo ""
@@ -88,7 +88,7 @@ case $choice in
         echo ""
         read -p "Are you sure you want to remove ALL mods? (y/n): " confirm
         if [[ "$confirm" =~ ^[Yy]$ ]]; then
-            sed -i "s|^mods=.*|mods=|" "$LGSM_CONFIG"
+            sed -i "s|^mods=.*|mods=\"\"|" "$LGSM_CONFIG"
             echo ""
             echo -e "${GREEN}✓ Cleared all mods from config${NC}"
         else
